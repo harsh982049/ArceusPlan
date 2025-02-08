@@ -12,7 +12,7 @@ const CaptureImages = () => {
   const router = useRouter();
   const [images, setImages] = useState([]);
 
-  // Capture an image and add it to the list
+  // Capture an image from the webcam
   const capture = () => {
     const imageSrc = webcamRef.current.getScreenshot();
     if (imageSrc) {
@@ -20,15 +20,30 @@ const CaptureImages = () => {
     }
   };
 
-  // Remove an image from the list
+  // Remove an image
   const removeImage = (index) => {
     const updatedImages = images.filter((_, i) => i !== index);
     setImages(updatedImages);
   };
 
-  // Send captured images to the Gemini API
+  // Handle file upload
+  const handleFileUpload = (event) => {
+    const files = event.target.files;
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        setImages((prevImages) => [...prevImages, reader.result]);
+      };
+    });
+  };
+
+  // Send images to the Gemini API
   const sendToGemini = async () => {
-    if (images.length === 0) return alert("Capture at least one image first!");
+    if (images.length === 0) {
+      alert("Please capture or upload at least one image!");
+      return;
+    }
 
     try {
       const formData = new FormData();
@@ -67,8 +82,10 @@ const CaptureImages = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6">Capture Room Images</h2>
-      <Card>
+      <h2 className="text-3xl font-bold mb-6">Capture or Upload Room Images</h2>
+
+      {/* Webcam */}
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle>Webcam</CardTitle>
         </CardHeader>
@@ -77,7 +94,12 @@ const CaptureImages = () => {
             ref={webcamRef}
             screenshotFormat="image/jpeg"
             className="rounded-md border"
-            style={{ width: "100%", height: "auto" }}
+            style={{
+              width: "100%",
+              maxWidth: "400px",
+              height: "300px",
+              margin: "0 auto",
+            }}
           />
           <Button
             onClick={capture}
@@ -88,27 +110,42 @@ const CaptureImages = () => {
         </CardContent>
       </Card>
 
-      {/* Display Captured Images */}
-      <div className="mt-8">
-        <h3 className="text-2xl font-semibold mb-4">Captured Images</h3>
-        {images.length === 0 && <p>No images captured yet.</p>}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {images.map((image, index) => (
-            <div key={index} className="relative">
-              <img
-                src={image}
-                alt={`Captured ${index + 1}`}
-                className="rounded-md shadow border"
-              />
-              <Button
-                onClick={() => removeImage(index)}
-                className="absolute top-2 right-2 bg-red-600 text-white hover:bg-red-700"
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
-        </div>
+      {/* File Uploader */}
+      <div className="mb-8">
+        <h3 className="text-2xl font-semibold mb-4">Upload Images</h3>
+        <input
+          type="file"
+          multiple
+          accept="image/jpeg, image/png, image/jpg"
+          className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          onChange={handleFileUpload}
+        />
+      </div>
+
+      {/* Display Captured/Uploaded Images */}
+      <div className="mb-8">
+        <h3 className="text-2xl font-semibold mb-4">Captured or Uploaded Images</h3>
+        {images.length === 0 ? (
+          <p className="text-gray-600">No images captured or uploaded yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {images.map((image, index) => (
+              <Card key={index} className="relative">
+                <img
+                  src={image}
+                  alt={`Captured ${index + 1}`}
+                  className="rounded-md w-full h-auto"
+                />
+                <Button
+                  onClick={() => removeImage(index)}
+                  className="absolute top-2 right-2 bg-red-600 text-white hover:bg-red-700"
+                >
+                  Remove
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Send Images to Gemini */}
