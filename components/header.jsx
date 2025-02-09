@@ -29,12 +29,12 @@ const Header = () => {
                                 <span className="hidden md:inline">Dashboard</span>
                             </Button>
                         </Link>
-                        <a href="/transaction/create">
+                        {/* <a href="/transaction/create">
                             <Button className="flex items-center gap-2">
                                 <PenBox size={18}/>
                                 <span className="hidden md:inline">Add Transaction</span>
                             </Button>
-                        </a>
+                        </a> */}
                     </SignedIn>
                     <SignedOut>
                         <SignInButton forceRedirectUrl="/">
